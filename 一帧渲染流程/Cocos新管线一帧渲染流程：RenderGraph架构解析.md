@@ -264,7 +264,7 @@ DFS 遍历到 Scene 节点时，调用 `DeviceRenderScene.record()`（executor.t
 | `DRAW_3D`         | `_record3D()`     | 遍历 Blit.models 的 SubModel/Pass，逐个录制 DrawCall |
 | `DRAW_PROFILE`    | `_showProfiler()` | 绘制 Profiler 面板                                   |
 
-## 重要文件汇总
+## 九、重要文件汇总
 
 | 文件                                                       | 含义                                                         |
 | :--------------------------------------------------------- | :----------------------------------------------------------- |
@@ -276,7 +276,7 @@ DFS 遍历到 Scene 节点时，调用 `DeviceRenderScene.record()`（executor.t
 | `cocos/rendering/custom/web-pipeline-types.ts`             | PipelineBuilder.setup() 类型定义                             |
 | `editor/assets/default_renderpipeline/builtin-pipeline.ts` | 默认管线的 PipelineBuilder 实现                              |
 
-## 总结
+## 十、总结
 
 Cocos 新管线用 RenderGraph 替代了旧管线的 Pipeline → Flow → Stage → Queue 固定架构。一帧渲染流程如下：
 
