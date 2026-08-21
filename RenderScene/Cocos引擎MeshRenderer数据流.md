@@ -12,40 +12,42 @@ Web 平台（WebGL/WebGPU）： TS 代码 → TS 版 Model/SubModel → TS 版 G
 原生平台（Vulkan/Metal/GLES3）： TS 代码 → JSB 绑定 → C++ 版 Model/SubModel → C++ 版 GFX 抽象层 → 图形 API → GPU。
 
 TS 层的 MeshRenderer 代码是**平台无关的**，它不关心底层是 TS 实现还是 C++ 实现。这个切换由 JSB 绑定层自动完成。
-## 二、完整链路
+## 二、MeshRenderer时序图
 
-从用户创建物体到参与渲染流程如下：
+```mermaid
+sequenceDiagram
+    participant Node as 场景节点
+    participant MR as MeshRenderer
+    participant BS as ModelBakeSettings
+    participant Root as Root
+    participant M as scene.Model
+    participant RS as RenderScene
 
-```
-用户创建节点 + 挂载 MeshRenderer 组件
-│
-▼
-节点激活 → onLoad() 被调用
-│
-├── _mesh.initialize()         ← 初始化 Mesh 资源
-├── _watchMorphInMesh()        ← 检查形态目标
-│
-├── _updateModels()            ← 创建/更新底层 Model
-│   │
-│   ├── _model 不存在？
-│   │   └── Root.createModel() → 创建 scene.Model 或 MorphModel
-│   │       ├── model.node = this.node
-│   │       └── model.transform = this.node
-│   │
-│   ├── createBoundingShape()  ← 根据 Mesh 的 min/max 创建包围盒
-│   ├── initLightingmap()      ← 初始化光照贴图
-│   │
-│   └── _updateModelParams()   ← 遍历 Mesh.renderingSubMeshes
-│       │                        为每个子网格调用 model.initSubModel()
-│       └── 设置材质、阴影、光照探针等参数
-│
-▼
-节点启用 → onEnable() 被调用
-│
-├── _updateCastShadow()        ← 更新阴影设置
-├── _updateUseLightProbe()     ← 更新光照探针
-└── _attachToScene()           ← 注册到 RenderScene
-└── renderScene.addModel(this._model)
+    Node->>MR: onLoad()
+    MR->>MR: _mesh.initialize()
+    MR->>MR: _watchMorphInMesh()
+    MR->>MR: _updateModels()
+    alt _model 已存在
+        MR->>M: destroy() / initialize()
+    else _model 不存在
+        MR->>Root: createModel(modelType)
+        Root-->>MR: 返回 model
+    end
+    MR->>M: createBoundingShape(min, max)
+    MR->>M: updateWorldBound()
+    MR->>M: initLightingmap(texture, uvParam)
+    MR->>M: useLightProbe / reflectionProbeType
+    MR->>M: initSubModel(...)
+    
+    Node->>MR: onEnable()
+    MR->>BS: 监听 USE_LIGHT_PROBE_CHANGED 等事件
+    MR->>M: onGlobalPipelineStateChanged()
+    MR->>MR: _updateCastShadow()
+    MR->>MR: _updateReceiveShadow()
+    MR->>MR: _updateShadowBias()
+    MR->>MR: _updateUseLightProbe()
+    MR->>MR: _updateReflectionProbeTexture()
+    MR->>RS: addModel(model)
 ```
 
 ## 三、关键数据结构
